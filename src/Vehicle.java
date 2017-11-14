@@ -34,9 +34,7 @@ class Vehicle extends Entity {
 		else if (carryingSample && !atBase) {
 			for (Location adjLoc : adjLocations) {
 				if (f.getSignalStrength(adjLoc) > f.getSignalStrength(location)) {
-					f.clearLocation(location);
-					f.place(this, adjLoc);
-					setLocation(adjLoc);
+					move(f, adjLoc);
 					return;
 				}
 			} 
@@ -50,11 +48,22 @@ class Vehicle extends Entity {
 		else {
 			Location neighbour = f.freeAdjacentLocation(location);
 			if (neighbour != null) {
-				f.clearLocation(location);
-				f.place(this, neighbour);
-				setLocation(neighbour);
+				move(f, neighbour);
 				return;
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * Moves the vehicle to the specified location  
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 * @param destination Vehicle's desired position 
+	 */
+	private void move(Field f, Location destination) {
+		f.clearLocation(location);
+		f.place(this, destination);
+		setLocation(destination);
 	}
 }
