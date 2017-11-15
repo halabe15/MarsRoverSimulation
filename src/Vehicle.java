@@ -19,37 +19,31 @@ class Vehicle extends Entity {
 		//complete this method
 	}
 
-	public void actSimple(Field f, Mothership m, ArrayList<Rock> rocksCollected){
+	public void actSimple(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
 		Location base = f.getNeighbour(location, Mothership.class);
 		boolean atBase = (base != null) ? true : false;
-		ArrayList<Location> adjLocations = f.getAllfreeAdjacentLocations(location);
-		Location neighbouringSample = f.getNeighbour(location, Rock.class);
 		
+		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		
-		// If carrying sample and at base, drop sample 
+		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
+		
 		if (carryingSample && atBase) {
 			carryingSample = false;
-		} 
-		// If carrying sample and not at base, travel up gradient  
-		else if (carryingSample && !atBase) {
-			for (Location adjLoc : adjLocations) {
+		} else if (carryingSample && !atBase) {
+			for (Location adjLoc : adjacentLocations) {
+				// If there's free adjacent location with a stronger signal, move there 
 				if (f.getSignalStrength(adjLoc) > f.getSignalStrength(location)) {
 					move(f, adjLoc);
 					return;
 				}
 			} 
-		} 
-		// If a sample is detected, pick up sample 
-		else if (neighbouringSample != null) {
-			f.clearLocation(neighbouringSample);
+		} else if (adjacentRockSample != null) {
+			f.clearLocation(adjacentRockSample);
 			carryingSample = true;
-		} 
-		// If nothing else to do, move randomly 
-		else {
+		} else {
 			Location neighbour = f.freeAdjacentLocation(location);
 			if (neighbour != null) {
 				move(f, neighbour);
-				return;
 			}
 		}
 	}
