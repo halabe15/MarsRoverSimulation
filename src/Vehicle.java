@@ -20,60 +20,47 @@ class Vehicle extends Entity {
 		boolean atBase = (base != null) ? true : false;
 		
 		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
-		
 		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
-		
-		Location adjacentCrumbs = senseCrumbs(f, adjacentLocations);
+		Location adjacentCrumb = senseCrumbs(f, adjacentLocations);
 		
 		if (carryingSample && atBase) {
 			carryingSample = false;
 		} else if (carryingSample && !atBase) {
-			f.dropCrumbs(location, 2);
-			if (!moveUpGradient(f, adjacentLocations)) {
+			Location previous = location;
+			if (moveUpGradient(f)) {
+				f.dropCrumbs(previous, 2);
+			} else {
 				moveRandomly(f);
 			}
 		} else if (adjacentRockSample != null) {
 			f.clearLocation(adjacentRockSample);
 			carryingSample = true;
-		} else if (adjacentCrumbs != null) {
-			f.pickUpACrumb(adjacentCrumbs);
-			if (!moveDownGradient(f, adjacentLocations)) {
+		} else if (adjacentCrumb != null) {
+			if (moveDownGradient(f)) {
+				f.pickUpACrumb(adjacentCrumb);
+			} else {
 				moveRandomly(f);
 			}
 		} else {
-			Location adjacent = f.freeAdjacentLocation(location);
-			if (adjacent != null) {
-				move(f, adjacent);
-			}
+			moveRandomly(f);
 		}
 	}
 
 	public void actSimple(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
 		Location base = f.getNeighbour(location, Mothership.class);
 		boolean atBase = (base != null) ? true : false;
-		
-		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
-		
+				
 		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
 		
 		if (carryingSample && atBase) {
 			carryingSample = false;
 		} else if (carryingSample && !atBase) {
-			// Travel up the gradient if there's a free space  
-			for (Location adjacent : adjacentLocations) {
-				if (f.getSignalStrength(adjacent) > f.getSignalStrength(location)) {
-					move(f, adjacent);
-					return;
-				}
-			} 
+			moveUpGradient(f);
 		} else if (adjacentRockSample != null) {
 			f.clearLocation(adjacentRockSample);
 			carryingSample = true;
 		} else {
-			Location adjacent = f.freeAdjacentLocation(location);
-			if (adjacent != null) {
-				move(f, adjacent);
-			}
+			moveRandomly(f);
 		}
 	}
 	
@@ -99,7 +86,8 @@ class Vehicle extends Entity {
 	 * @param f Field the vehicle is operating in 
 	 * @return Whether or not the vehicle could move up the gradient 
 	 */
-	private boolean moveUpGradient(Field f, ArrayList<Location> adjacentLocations) {
+	private boolean moveUpGradient(Field f) {
+		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		for (Location adjacent : adjacentLocations) {
 			if (f.getSignalStrength(adjacent) > f.getSignalStrength(location)) {
 				move(f, adjacent);
@@ -118,7 +106,8 @@ class Vehicle extends Entity {
 	 * @param f Field the vehicle is operating in 
 	 * @return Whether or not the vehicle could move down the gradient 
 	 */
-	private boolean moveDownGradient(Field f, ArrayList<Location> adjacentLocations) {
+	private boolean moveDownGradient(Field f) {
+		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		for (Location adjacent : adjacentLocations) {
 			if (f.getSignalStrength(adjacent) < f.getSignalStrength(location)) {
 				move(f, adjacent);
