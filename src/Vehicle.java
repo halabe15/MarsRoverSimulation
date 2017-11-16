@@ -29,24 +29,16 @@ class Vehicle extends Entity {
 			carryingSample = false;
 		} else if (carryingSample && !atBase) {
 			f.dropCrumbs(location, 2);
-			// Travel up the gradient if there's a free space  
-			for (Location adjacent : adjacentLocations) {
-				if (f.getSignalStrength(adjacent) > f.getSignalStrength(location)) {
-					move(f, adjacent);
-					return;
-				}
+			if (!moveUpGradient(f, adjacentLocations)) {
+				moveRandomly(f);
 			}
 		} else if (adjacentRockSample != null) {
 			f.clearLocation(adjacentRockSample);
 			carryingSample = true;
 		} else if (adjacentCrumbs != null) {
 			f.pickUpACrumb(adjacentCrumbs);
-			// Travel down the gradient if there's a free space
-			for (Location adjacent : adjacentLocations) {
-				if (f.getSignalStrength(adjacent) < f.getSignalStrength(location)) {
-					move(f, adjacent);
-					return;
-				}
+			if (!moveDownGradient(f, adjacentLocations)) {
+				moveRandomly(f);
 			}
 		} else {
 			Location adjacent = f.freeAdjacentLocation(location);
@@ -96,6 +88,56 @@ class Vehicle extends Entity {
 		f.clearLocation(location);
 		f.place(this, destination);
 		setLocation(destination);
+	}
+	
+	/**
+	 * Moves the vehicle up the gradient and returns true, if there's an adjacent
+	 * space with a signal strength greater than the vehicle's current location. 
+	 * If there are no adjacent spaces with a higher signal strength, the vehicle 
+	 * won't move and the method will return false 
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 * @return Whether or not the vehicle could move up the gradient 
+	 */
+	private boolean moveUpGradient(Field f, ArrayList<Location> adjacentLocations) {
+		for (Location adjacent : adjacentLocations) {
+			if (f.getSignalStrength(adjacent) > f.getSignalStrength(location)) {
+				move(f, adjacent);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Moves the vehicle down the gradient and returns true, if there's an adjacent
+	 * space with a signal strength less than the vehicle's current location. 
+	 * If there are no adjacent spaces with a lower signal strength, the vehicle 
+	 * won't move and the method will return false 
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 * @return Whether or not the vehicle could move down the gradient 
+	 */
+	private boolean moveDownGradient(Field f, ArrayList<Location> adjacentLocations) {
+		for (Location adjacent : adjacentLocations) {
+			if (f.getSignalStrength(adjacent) < f.getSignalStrength(location)) {
+				move(f, adjacent);
+				return true;
+			}
+		}
+		return false; 
+	}
+	
+	/**
+	 * Moves the vehicle to any adjacent space, if there are any free 
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 */
+	private void moveRandomly(Field f) {
+		Location adjacent = f.freeAdjacentLocation(location);
+		if (adjacent != null) {
+			move(f, adjacent);
+		}
 	}
 	
 	/**
