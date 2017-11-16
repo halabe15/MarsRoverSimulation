@@ -10,8 +10,8 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		actCollaborative(f,m,rocksCollected);
-		//actSimple(f,m,rocksCollected);
+		//actCollaborative(f,m,rocksCollected);
+		actSimple(f,m,rocksCollected);
 	}
 	
 	
@@ -22,6 +22,7 @@ class Vehicle extends Entity {
 		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
 		Location adjacentCrumb = senseCrumbs(f, adjacentLocations);
+		
 		
 		if (carryingSample && atBase) {
 			carryingSample = false;
@@ -55,7 +56,9 @@ class Vehicle extends Entity {
 		if (carryingSample && atBase) {
 			carryingSample = false;
 		} else if (carryingSample && !atBase) {
-			moveUpGradient(f);
+			if (!moveUpGradient(f)) {
+				moveRandomly(f);
+			}
 		} else if (adjacentRockSample != null) {
 			f.clearLocation(adjacentRockSample);
 			carryingSample = true;
