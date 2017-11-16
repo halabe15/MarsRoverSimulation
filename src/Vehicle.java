@@ -10,8 +10,8 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		//actCollaborative(f,m,rocksCollected);
-		actSimple(f,m,rocksCollected);
+		actCollaborative(f,m,rocksCollected);
+		//actSimple(f,m,rocksCollected);
 	}
 	
 	
@@ -23,9 +23,13 @@ class Vehicle extends Entity {
 		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
 		Location adjacentCrumb = senseCrumbs(f, adjacentLocations);
 		
-		
 		if (carryingSample && atBase) {
 			carryingSample = false;
+			ExperimentStats.incrementRocksGathered();
+			
+			if (ExperimentStats.getRocksGathered() == 300) {
+				System.out.println("break here");
+			}
 		} else if (carryingSample && !atBase) {
 			Location previous = location;
 			if (moveUpGradient(f)) {
