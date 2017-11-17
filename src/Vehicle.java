@@ -1,5 +1,30 @@
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Models a Rover Vehicle, which roams the landscape on Mars. Its objective is to collect Rock samples
+ * and bring them back to the Mothership. 
+ * 
+ * Its primary method is act(), which calls either its simple, collaborative or optimised behaviour depending
+ * on which one the user wants to use (the other method calls should be commented out). 
+ * 
+ * Descriptions of each behaviour in the act methods' subsumption hierarchies:
+ * 
+ * (1) if carrying a sample and at the base then drop sample 
+ * (2) if carrying a sample and not at the base then travel up gradient 
+ * (3) if detect a sample then pick sample 
+ * (4) if true then move randomly 
+ * (5) if carrying a sample and not at the base then drop two crumbs and travel up gradient
+ * (6) if sense crumbs then pick up 1 and travel down gradient 
+ * 
+ * N.B. For behaviours (2), (5) and (6): if the Vehicle can't travel up/down the gradient, it 
+ * will move randomly and (only relevant for 5 and 6) not drop any crumbs. Otherwise, there would be
+ * instances where the Vehicle gets caught in a never-ending loop; surrounded by locations with a higher/lower
+ * gradient, thus unable to ever actually move anywhere. 
+ * 
+ * @author lawtonbs
+ *
+ */
 class Vehicle extends Entity {
 	public boolean carryingSample;
 	
@@ -14,59 +39,76 @@ class Vehicle extends Entity {
 		//actSimple(f,m,rocksCollected);
 	}
 	
-	
-	public void actCollaborative(Field f, Mothership m, ArrayList<Rock> rocksCollected){
-		Location base = f.getNeighbour(location, Mothership.class);
-		boolean atBase = (base != null) ? true : false;
+	/**
+	 * Act according to the collaborative subsumption hierarchy below.
+	 * 
+	 * (1) ≺ (5) ≺ (3) ≺ (6) ≺ (4)
+	 * 
+	 * Details on the individual behaviours can be found in the class-level comments. 
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 * @param m Vehicle's Mothership 
+	 * @param rocksCollected Rocks collected and returned to Mothership 
+	 */
+	public void actCollaborative(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
+		boolean atBase = f.isNeighbourTo(location, Mothership.class);		
+		Location adjacentRockLocation = f.getNeighbour(location, Rock.class);
+		Location adjacentCrumb = senseCrumbs(f);
 		
-		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
-		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
-		Location adjacentCrumb = senseCrumbs(f, adjacentLocations);
-		
-		if (carryingSample && atBase) {
+		if (carryingSample && atBase) {				// (1)				
+			m.incrementRockCount();
 			carryingSample = false;
-			ExperimentStats.incrementRocksGathered();
-			
-			if (ExperimentStats.getRocksGathered() == 300) {
-				System.out.println("break here");
-			}
-		} else if (carryingSample && !atBase) {
+		} else if (carryingSample && !atBase) {		// (5)
 			Location previous = location;
 			if (moveUpGradient(f)) {
 				f.dropCrumbs(previous, 2);
 			} else {
 				moveRandomly(f);
 			}
-		} else if (adjacentRockSample != null) {
-			f.clearLocation(adjacentRockSample);
+		} else if (adjacentRockLocation != null) {	// (3)
+			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
+			rocksCollected.add(rock);
+			
 			carryingSample = true;
-		} else if (adjacentCrumb != null) {
+		} else if (adjacentCrumb != null) {			// (6)
 			if (moveDownGradient(f)) {
 				f.pickUpACrumb(adjacentCrumb);
 			} else {
 				moveRandomly(f);
 			}
-		} else {
+		} else {									// (4)
 			moveRandomly(f);
 		}
 	}
-
+	
+	/**
+	 * Act according to the simple, non-collaborative subsumption hierarchy below:
+	 * 
+	 * (1) ≺ (2) ≺ (3) ≺ (4)
+	 * 
+	 * Details on the individual behaviours can be found in the class-level comments. 
+	 * 
+	 * @param f Field the Vehicle is operating in 
+	 * @param m Vehicle's Mothership 
+	 * @param rocksCollected Rocks collected and returned to the Mothership 
+	 */
 	public void actSimple(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
-		Location base = f.getNeighbour(location, Mothership.class);
-		boolean atBase = (base != null) ? true : false;
-				
-		Location adjacentRockSample = f.getNeighbour(location, Rock.class);
+		boolean atBase = f.isNeighbourTo(location, Mothership.class);		
+		Location adjacentRockLocation = f.getNeighbour(location, Rock.class);
 		
-		if (carryingSample && atBase) {
+		if (carryingSample && atBase) {				// (1)
+			m.incrementRockCount();
 			carryingSample = false;
-		} else if (carryingSample && !atBase) {
+		} else if (carryingSample && !atBase) {		// (2)
 			if (!moveUpGradient(f)) {
 				moveRandomly(f);
 			}
-		} else if (adjacentRockSample != null) {
-			f.clearLocation(adjacentRockSample);
+		} else if (adjacentRockLocation != null) {	// (3)
+			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
+			rocksCollected.add(rock);
+			
 			carryingSample = true;
-		} else {
+		} else {									// (4)
 			moveRandomly(f);
 		}
 	}
@@ -125,25 +167,29 @@ class Vehicle extends Entity {
 	}
 	
 	/**
-	 * Moves the vehicle to any adjacent space, if there are any free 
+	 * Moves the vehicle to a randomly selected adjacent space, if one is free
 	 * 
 	 * @param f Field the vehicle is operating in 
 	 */
 	private void moveRandomly(Field f) {
-		Location adjacent = f.freeAdjacentLocation(location);
-		if (adjacent != null) {
-			move(f, adjacent);
+		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
+		int randomNum = ThreadLocalRandom.current().nextInt(0, adjacentLocations.size());
+		if (adjacentLocations.size() > 0) {
+			move(f, adjacentLocations.get(randomNum));
 		}
 	}
 	
 	/**
+	 * Senses crumbs in locations adjacent the Vehicle. If some are found, returns the
+	 * Location containing them. Returns null there aren't any adjacent to the Vehicle. 
 	 * 
 	 * @param f Field the vehicle is operating in  
 	 * @param adjacentLocations locations adjacent to the vehicle's position 
 	 * @return Location containing crumbs if somewhere found adjacent to the vehicle, or null
 	 * if none were found 
 	 */
-	private Location senseCrumbs(Field f, ArrayList<Location> adjacentLocations) {
+	private Location senseCrumbs(Field f) {
+		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		for (Location adjacent : adjacentLocations) {
 			if (f.getCrumbQuantityAt(adjacent) > 0) {
 				return adjacent;
