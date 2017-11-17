@@ -1,5 +1,13 @@
 class Mothership extends Entity {
-	public Mothership(Location location){super(location);}
+	
+	// Number of rocks returned to the Mothership 
+	private int rockCount;
+	
+	public Mothership(Location location) {
+		super(location);
+		rockCount = 0;
+	}
+	
 	public void emitSignal(Field f){
 		for(int row = 0; row < f.getDepth(); row++) {
 			for(int col = 0; col < f.getWidth(); col++) {
@@ -14,5 +22,19 @@ class Mothership extends Entity {
 				f.setSignalStrength(row, col, signal);
 			}
 		}
+	}
+	
+	/**
+	 * Increment the number of Rocks returned to the Mothership by 1 
+	 */
+	public void incrementRockCount() {
+		rockCount++;
+	}
+	
+	/**
+	 * @return Number of Rocks returned to the Mothership 
+	 */
+	public int getRockCount() {
+		return rockCount;
 	}
 }
