@@ -103,12 +103,15 @@ public class Simulator
    		
        for(Iterator<Rock> it = rocksToRemove.iterator(); it.hasNext(); ) {
        		Rock r = it.next();
-       		//tempField.clearLocation(r.getLocation());
+       		tempField.clearLocation(r.getLocation());
        		rocks.remove(r);
        }
                  
       field = tempField;
       view.showStatus(step, field);
+      
+      // Print the number of steps taken to move all rock samples to the mothership
+      if (mothership.getRockCount() == 300) System.out.println("Step: " + step);
     }
         
     /**
