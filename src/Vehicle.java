@@ -185,16 +185,20 @@ class Vehicle extends Entity {
 	 * 
 	 * @param f Field the vehicle is operating in  
 	 * @param adjacentLocations locations adjacent to the vehicle's position 
-	 * @return Location containing crumbs if somewhere found adjacent to the vehicle, or null
+	 * @return Location containing (the most) crumbs if somewhere found adjacent to the vehicle, or null
 	 * if none were found 
 	 */
 	private Location senseCrumbs(Field f) {
 		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
+		int highestCrumbCount = 0;
+		Location adjacentCrumbLocation = null;
+		
 		for (Location adjacent : adjacentLocations) {
-			if (f.getCrumbQuantityAt(adjacent) > 0) {
-				return adjacent;
+			if (f.getCrumbQuantityAt(adjacent) > highestCrumbCount) {
+				adjacentCrumbLocation = adjacent;
+				highestCrumbCount = f.getCrumbQuantityAt(location);
 			}
 		}
-		return null;
+		return adjacentCrumbLocation;
 	}
 }

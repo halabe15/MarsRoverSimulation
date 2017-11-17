@@ -111,7 +111,9 @@ public class Simulator
       view.showStatus(step, field);
       
       // Print the number of steps taken to move all rock samples to the mothership
-      if (mothership.getRockCount() == 300) System.out.println("Step: " + step);
+      if (mothership.getRockCount() == 300) {
+    	  	System.out.println("Step: " + step);
+      }
     }
         
     /**
@@ -135,18 +137,17 @@ public class Simulator
 
         Location rockLocations[];
     	
-    	rockLocations = ClusterGenerator.generateClusters(ModelConstants.ROCK_CLUSTERS, 
-    			ModelConstants.ROCK_LOCATIONS, field.getWidth(), field.getDepth(), 
-    			ModelConstants.ROCK_CLUSTER_STD);
-    	
-    	for(int i=0; i<rockLocations.length; i++)
-    	{
-            Location location = rockLocations[i];
-            Rock r = new Rock(location);
-            field.place(r,location);
-            rocks.add(r);    		
-    	}
-    	
+	    	rockLocations = ClusterGenerator.generateClusters(ModelConstants.ROCK_CLUSTERS, 
+	    			ModelConstants.ROCK_LOCATIONS, field.getWidth(), field.getDepth(), 
+	    			ModelConstants.ROCK_CLUSTER_STD);
+	    	
+	    	for(int i=0; i<rockLocations.length; i++)
+	    	{
+	            Location location = rockLocations[i];
+	            Rock r = new Rock(location);
+	            field.place(r,location);
+	            rocks.add(r);    		
+	    	}    	
     	 		
  		double obsProb = ModelConstants.OBSTACLE_CREATION_PROBABILITY;
  		double vehProb = ModelConstants.OBSTACLE_CREATION_PROBABILITY + ModelConstants.VEHICLE_CREATION_PROBABILITY;
