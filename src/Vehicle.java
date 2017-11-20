@@ -35,8 +35,39 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		actCollaborative(f,m,rocksCollected);
+		//actCollaborative(f,m,rocksCollected);
 		//actSimple(f,m,rocksCollected);
+		actOptimisation(f,m,rocksCollected);
+	}
+	
+	public void actOptimisation(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
+		boolean atBase = f.isNeighbourTo(location, Mothership.class);		
+		Location adjacentRockLocation = f.getNeighbour(location, Rock.class);
+		Location adjacentCrumb = senseCrumbs(f);
+		
+		if (carryingSample && atBase) {				// (1)				
+			m.incrementRockCount();
+			carryingSample = false;
+		} else if (carryingSample && !atBase) {		// (5)
+			f.dropCrumbs(location, 2);
+			if (!moveUpGradient(f)) {
+				moveRandomly(f);
+			}
+		} else if (adjacentRockLocation != null) {	// (3)
+			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
+			rocksCollected.add(rock);
+			
+			carryingSample = true;
+		} else if (adjacentCrumb != null) {			// (6)
+			f.pickUpACrumb(adjacentCrumb);
+			if (!moveDownGradient(f)) {
+				if (!move(f, adjacentCrumb)) {
+					moveRandomly(f);
+				}
+			}
+		} else {									// (4)
+			moveRandomly(f);
+		}
 	}
 	
 	/**
@@ -115,15 +146,23 @@ class Vehicle extends Entity {
 	
 	/**
 	 * 
-	 * Moves the vehicle to the specified location  
+	 * Moves the vehicle to the specified location, if it's free. 
 	 * 
 	 * @param f Field the vehicle is operating in 
 	 * @param destination Vehicle's desired position 
+	 * 
+	 * @return Whether or not the Vehicle was moved to the destination 
 	 */
-	private void move(Field f, Location destination) {
-		f.clearLocation(location);
-		f.place(this, destination);
-		setLocation(destination);
+	private boolean move(Field f, Location destination) {
+		if (f.getObjectAt(destination) == null) {
+			f.clearLocation(location);
+			f.place(this, destination);
+			setLocation(destination);
+			
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	/**
@@ -172,16 +211,18 @@ class Vehicle extends Entity {
 	 * @param f Field the vehicle is operating in 
 	 */
 	private void moveRandomly(Field f) {
-		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
+		/**ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		int randomNum = ThreadLocalRandom.current().nextInt(0, adjacentLocations.size());
 		if (adjacentLocations.size() > 0) {
 			move(f, adjacentLocations.get(randomNum));
-		}
+		}**/
+		Location next = f.freeAdjacentLocation(location);
+		move(f, next);
 	}
 	
 	/**
 	 * Senses crumbs in locations adjacent the Vehicle. If some are found, returns the
-	 * Location containing them. Returns null there aren't any adjacent to the Vehicle. 
+	 * Location containing the highest number of crumbs. Otherwise, null.
 	 * 
 	 * @param f Field the vehicle is operating in  
 	 * @param adjacentLocations locations adjacent to the vehicle's position 
