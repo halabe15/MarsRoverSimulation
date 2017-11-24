@@ -103,7 +103,7 @@ public class Simulator
    		
        for(Iterator<Rock> it = rocksToRemove.iterator(); it.hasNext(); ) {
        		Rock r = it.next();
-       		tempField.clearLocation(r.getLocation());
+       		//tempField.clearLocation(r.getLocation());
        		rocks.remove(r);
        }
                  
@@ -141,13 +141,13 @@ public class Simulator
 	    			ModelConstants.ROCK_LOCATIONS, field.getWidth(), field.getDepth(), 
 	    			ModelConstants.ROCK_CLUSTER_STD);
 	    	
-	    	for(int i=0; i<rockLocations.length; i++)
+	    	for(int i=0; i < rockLocations.length; i++)
 	    	{
 	            Location location = rockLocations[i];
 	            Rock r = new Rock(location);
 	            field.place(r,location);
 	            rocks.add(r);    		
-	    	}    	
+	    	}
     	 		
  		double obsProb = ModelConstants.OBSTACLE_CREATION_PROBABILITY;
  		double vehProb = ModelConstants.OBSTACLE_CREATION_PROBABILITY + ModelConstants.VEHICLE_CREATION_PROBABILITY;

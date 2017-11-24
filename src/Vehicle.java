@@ -35,9 +35,9 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		//actCollaborative(f,m,rocksCollected);
+		actCollaborative(f,m,rocksCollected);
 		//actSimple(f,m,rocksCollected);
-		actOptimisation(f,m,rocksCollected);
+		//actOptimisation(f,m,rocksCollected);
 	}
 	
 	public void actOptimisation(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
@@ -56,7 +56,7 @@ class Vehicle extends Entity {
 		} else if (adjacentRockLocation != null) {	// (3)
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
-			
+			f.clearLocation(adjacentRockLocation);
 			carryingSample = true;
 		} else if (adjacentCrumb != null) {			// (6)
 			f.pickUpACrumb(adjacentCrumb);
@@ -65,7 +65,7 @@ class Vehicle extends Entity {
 					moveRandomly(f);
 				}
 			}
-		} else {									// (4)
+		} else {									// (4) 
 			moveRandomly(f);
 		}
 	}
@@ -99,7 +99,7 @@ class Vehicle extends Entity {
 		} else if (adjacentRockLocation != null) {	// (3)
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
-			
+			f.clearLocation(adjacentRockLocation);
 			carryingSample = true;
 		} else if (adjacentCrumb != null) {			// (6)
 			if (moveDownGradient(f)) {
@@ -137,7 +137,7 @@ class Vehicle extends Entity {
 		} else if (adjacentRockLocation != null) {	// (3)
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
-			
+			f.clearLocation(adjacentRockLocation);
 			carryingSample = true;
 		} else {									// (4)
 			moveRandomly(f);
