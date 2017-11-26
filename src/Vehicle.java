@@ -16,11 +16,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * (4) if true then move randomly 
  * (5) if carrying a sample and not at the base then drop two crumbs and travel up gradient
  * (6) if sense crumbs then pick up 1 and travel down gradient 
- * 
- * N.B. For behaviours (2), (5) and (6): if the Vehicle can't travel up/down the gradient, it 
- * will move randomly and (only relevant for 5 and 6) not drop any crumbs. Otherwise, there would be
- * instances where the Vehicle gets caught in a never-ending loop; surrounded by locations with a higher/lower
- * gradient, thus unable to ever actually move anywhere. 
+ * (7) if true then move with intent (to the first found available location)
+ * (8) if sense crumbs then pick up 1 and travel to its location 
  * 
  * @author lawtonbs
  *
@@ -35,38 +32,52 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		//actCollaborative(f,m,rocksCollected);
+		actCollaborative(f,m,rocksCollected);
 		//actSimple(f,m,rocksCollected);
-		actOptimised(f,m,rocksCollected);
+		//actOptimised(f,m,rocksCollected);
 	}
 	
+	/**
+	 * Act according to the optimised subsumption hierarchy below.
+	 * 
+	 * (1) ≺ (5) ≺ (3) ≺ (8) ≺ (7)
+	 * 
+	 * Details on the individual behaviours can be found in the class-level comments. 
+	 * 
+	 * N.B. behaviour (5) defaults to behaviour (7) if moving up a gradient isn't possible, i.e.
+	 * none of the adjacent locations have a stronger signal strength. Without this, the Vehicles can get
+	 * caught in a loop and never leave their location -- meaning the simulation never ends. This optimisation also
+	 * differs from the original in that a crumb is dropped regardless of whether or not the vehicle travels up the gradient.
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 * @param m Vehicle's Mothership 
+	 * @param rocksCollected Rocks collected and returned to Mothership 
+	 */
 	public void actOptimised(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
 		boolean atBase = f.isNeighbourTo(location, Mothership.class);		
 		Location adjacentRockLocation = f.getNeighbour(location, Rock.class);
 		Location adjacentCrumb = senseCrumbs(f);
 		
-		if (carryingSample && atBase) {								
+		if (carryingSample && atBase) {				// (1)					
 			m.incrementRockCount();
 			carryingSample = false;
-		} else if (carryingSample && !atBase) {		
+		} else if (carryingSample && !atBase) {		// (5)*
 			f.dropCrumbs(location, 2);
 			if (!moveUpGradient(f)) {
-				moveWithIntent(f);
+				moveToFirstAvailable(f);
 			}
-		} else if (adjacentRockLocation != null) {	
+		} else if (adjacentRockLocation != null) {	// (3)
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
 			f.clearLocation(adjacentRockLocation);
 			carryingSample = true;
-		} else if (adjacentCrumb != null) {			
+		} else if (adjacentCrumb != null) {			// (8)
 			f.pickUpACrumb(adjacentCrumb);
 			if (!move(f, adjacentCrumb)) {
-				if (!moveDownGradient(f)) {
-					moveWithIntent(f);
-				}
+				moveToFirstAvailable(f);
 			}
-		} else {									 
-			moveWithIntent(f);
+		} else {									// (7)
+			moveToFirstAvailable(f);
 		}
 	}
 	
@@ -76,6 +87,10 @@ class Vehicle extends Entity {
 	 * (1) ≺ (5) ≺ (3) ≺ (6) ≺ (4)
 	 * 
 	 * Details on the individual behaviours can be found in the class-level comments. 
+	 * 
+	 * N.B. behaviour (5) defaults to behaviour (4) if moving up a gradient isn't possible, i.e.
+	 * none of the adjacent locations have a stronger signal strength. Without this, the Vehicles can get
+	 * caught in a loop and never leave their location -- meaning the simulation never ends. 
 	 * 
 	 * @param f Field the vehicle is operating in 
 	 * @param m Vehicle's Mothership 
@@ -91,22 +106,21 @@ class Vehicle extends Entity {
 			carryingSample = false;
 		} else if (carryingSample && !atBase) {		// (5)
 			Location previous = location;
-			if (moveUpGradient(f)) {
+			/**if (moveUpGradient(f)) {
 				f.dropCrumbs(previous, 2);
 			} else {
 				moveRandomly(f);
-			}
+			}**/
+			f.dropCrumbs(location, 2);
+			moveUpGradient(f);
 		} else if (adjacentRockLocation != null) {	// (3)
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
 			f.clearLocation(adjacentRockLocation);
 			carryingSample = true;
 		} else if (adjacentCrumb != null) {			// (6)
-			if (moveDownGradient(f)) {
-				f.pickUpACrumb(adjacentCrumb);
-			} else {
-				moveRandomly(f);
-			}
+			f.pickUpACrumb(adjacentCrumb);
+			moveDownGradient(f);
 		} else {									// (4)
 			moveRandomly(f);
 		}
@@ -118,6 +132,11 @@ class Vehicle extends Entity {
 	 * (1) ≺ (2) ≺ (3) ≺ (4)
 	 * 
 	 * Details on the individual behaviours can be found in the class-level comments. 
+	 * 
+	 * 
+	 * N.B. behaviour (2) defaults to behaviour (4) if moving up a gradient isn't possible, i.e.
+	 * none of the adjacent locations have a stronger signal strength. Without this, the Vehicles can get
+	 * caught in a loop and never leave their location -- meaning the simulation never ends. 
 	 * 
 	 * @param f Field the Vehicle is operating in 
 	 * @param m Vehicle's Mothership 
@@ -178,8 +197,7 @@ class Vehicle extends Entity {
 		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		for (Location adjacent : adjacentLocations) {
 			if (f.getSignalStrength(adjacent) > f.getSignalStrength(location)) {
-				move(f, adjacent);
-				return true;
+				return move(f, adjacent);
 			}
 		}
 		return false;
@@ -198,8 +216,7 @@ class Vehicle extends Entity {
 		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		for (Location adjacent : adjacentLocations) {
 			if (f.getSignalStrength(adjacent) < f.getSignalStrength(location)) {
-				move(f, adjacent);
-				return true;
+				return move(f, adjacent);
 			}
 		}
 		return false; 
@@ -218,7 +235,12 @@ class Vehicle extends Entity {
 		}
 	}
 	
-	private void moveWithIntent(Field f) {
+	/**
+	 * Moves the vehicle to the first found adjacent location, if one is free 
+	 * 
+	 * @param f Field the vehicle is operating in 
+	 */
+	private void moveToFirstAvailable(Field f) {
 		Location next = f.freeAdjacentLocation(location);
 		move(f, next);
 	}
