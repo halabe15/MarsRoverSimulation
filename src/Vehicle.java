@@ -32,9 +32,9 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		actCollaborative(f,m,rocksCollected);
+		//actCollaborative(f,m,rocksCollected);
 		//actSimple(f,m,rocksCollected);
-		//actOptimised(f,m,rocksCollected);
+		actOptimised(f,m,rocksCollected);
 	}
 	
 	/**
@@ -106,13 +106,11 @@ class Vehicle extends Entity {
 			carryingSample = false;
 		} else if (carryingSample && !atBase) {		// (5)
 			Location previous = location;
-			/**if (moveUpGradient(f)) {
+			if (moveUpGradient(f)) {
 				f.dropCrumbs(previous, 2);
 			} else {
 				moveRandomly(f);
-			}**/
-			f.dropCrumbs(location, 2);
-			moveUpGradient(f);
+			}
 		} else if (adjacentRockLocation != null) {	// (3)
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
