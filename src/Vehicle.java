@@ -35,38 +35,38 @@ class Vehicle extends Entity {
 
 	public void act(Field f, Mothership m, ArrayList<Rock> rocksCollected)
 	{
-		actCollaborative(f,m,rocksCollected);
+		//actCollaborative(f,m,rocksCollected);
 		//actSimple(f,m,rocksCollected);
-		//actOptimisation(f,m,rocksCollected);
+		actOptimised(f,m,rocksCollected);
 	}
 	
-	public void actOptimisation(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
+	public void actOptimised(Field f, Mothership m, ArrayList<Rock> rocksCollected) {
 		boolean atBase = f.isNeighbourTo(location, Mothership.class);		
 		Location adjacentRockLocation = f.getNeighbour(location, Rock.class);
 		Location adjacentCrumb = senseCrumbs(f);
 		
-		if (carryingSample && atBase) {				// (1)				
+		if (carryingSample && atBase) {								
 			m.incrementRockCount();
 			carryingSample = false;
-		} else if (carryingSample && !atBase) {		// (5)
+		} else if (carryingSample && !atBase) {		
 			f.dropCrumbs(location, 2);
 			if (!moveUpGradient(f)) {
-				moveRandomly(f);
+				moveWithIntent(f);
 			}
-		} else if (adjacentRockLocation != null) {	// (3)
+		} else if (adjacentRockLocation != null) {	
 			Rock rock = (Rock) f.getObjectAt(adjacentRockLocation);
 			rocksCollected.add(rock);
 			f.clearLocation(adjacentRockLocation);
 			carryingSample = true;
-		} else if (adjacentCrumb != null) {			// (6)
+		} else if (adjacentCrumb != null) {			
 			f.pickUpACrumb(adjacentCrumb);
-			if (!moveDownGradient(f)) {
-				if (!move(f, adjacentCrumb)) {
-					moveRandomly(f);
+			if (!move(f, adjacentCrumb)) {
+				if (!moveDownGradient(f)) {
+					moveWithIntent(f);
 				}
 			}
-		} else {									// (4) 
-			moveRandomly(f);
+		} else {									 
+			moveWithIntent(f);
 		}
 	}
 	
@@ -211,11 +211,14 @@ class Vehicle extends Entity {
 	 * @param f Field the vehicle is operating in 
 	 */
 	private void moveRandomly(Field f) {
-		/**ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
+		ArrayList<Location> adjacentLocations = f.getAllfreeAdjacentLocations(location);
 		int randomNum = ThreadLocalRandom.current().nextInt(0, adjacentLocations.size());
 		if (adjacentLocations.size() > 0) {
 			move(f, adjacentLocations.get(randomNum));
-		}**/
+		}
+	}
+	
+	private void moveWithIntent(Field f) {
 		Location next = f.freeAdjacentLocation(location);
 		move(f, next);
 	}
