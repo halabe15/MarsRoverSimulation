@@ -41,7 +41,7 @@ public class GUImain {
 	private String defSimSeed = "133";
 	private String defSimDim = "100";	// default value for the dimension of the simulation grid
 	private String defSimProb = "0.002";  // default value for wherever a probability is needed
-	private String defRockClusterNum = "7";	// default value for the number of clusters
+	private String defRockClusterNum = "30";	// default value for the number of clusters
 	private String defRockLocations = "300";  // default value for number of rock locations
 	private String defRockClusterStd = "2.0"; // default value for number of rock cluster std
 
